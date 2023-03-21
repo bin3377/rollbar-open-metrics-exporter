@@ -225,7 +225,7 @@ func GetOccurrencesMetrics(projectToken string, params OccurrenceMetricsParams) 
 	return &resp.Result, nil
 }
 
-func NewItemOccurrencesInput(ago time.Duration) OccurrenceMetricsParams {
+func NewItemOccurrencesInput(ago time.Duration, limit int) OccurrenceMetricsParams {
 	end := time.Now()
 	start := end.Add(-ago)
 	return OccurrenceMetricsParams{
@@ -234,10 +234,11 @@ func NewItemOccurrencesInput(ago time.Duration) OccurrenceMetricsParams {
 		GroupBy: []Field{
 			FieldItemId,
 		},
+		Limit: limit,
 	}
 }
 
-func NewItemOccurrencesFullInput(ago time.Duration) OccurrenceMetricsParams {
+func NewItemOccurrencesFullInput(ago time.Duration, limit int) OccurrenceMetricsParams {
 	end := time.Now()
 	start := end.Add(-ago)
 	return OccurrenceMetricsParams{
@@ -250,11 +251,12 @@ func NewItemOccurrencesFullInput(ago time.Duration) OccurrenceMetricsParams {
 			FieldItemStatus,
 			FieldItemLevel,
 		},
+		Limit: limit,
 	}
 }
 
-func GetItemOccurrences(projectToken string, ago time.Duration) ([]ItemOccurrence, error) {
-	metrics, err := GetOccurrencesMetrics(projectToken, NewItemOccurrencesFullInput(ago))
+func GetItemOccurrences(projectToken string, ago time.Duration, limit int) ([]ItemOccurrence, error) {
+	metrics, err := GetOccurrencesMetrics(projectToken, NewItemOccurrencesFullInput(ago, limit))
 	if err != nil {
 		return nil, err
 	}

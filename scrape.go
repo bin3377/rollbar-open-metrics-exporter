@@ -15,6 +15,7 @@ var (
 		Help: "This is the counter of total occurrences of an item",
 	},
 		[]string{
+			"project_id",
 			"item_id",
 		},
 	)
@@ -118,7 +119,7 @@ func scrape() error {
 			tokens[p.ID] = token
 		}
 
-		occs, err := rollbar.GetItemOccurrences(token, ScrapeInterval)
+		occs, err := rollbar.GetItemOccurrences(token, ScrapeInterval, MaxItemsPerProject)
 		if err != nil {
 			logrus.Errorf("GetItemOccurrences failed - project: [%d]%s, %v", p.ID, p.Name, err)
 			delete(tokens, p.ID)
@@ -162,9 +163,10 @@ func scrape() error {
 
 			old := itemCounter[item.ID]
 			occurrences.WithLabelValues(
+				fmt.Sprintf("%d", p.ID),    /* project_id */
 				fmt.Sprintf("%d", item.ID), /* item_id */
 			).Add(float64(item.TotalOccurrences - old))
-
+			itemCounter[item.ID] = item.TotalOccurrences
 		}
 	}
 

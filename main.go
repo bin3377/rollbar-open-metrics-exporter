@@ -19,6 +19,7 @@ var (
 	ScrapeInterval          = 5 * time.Minute
 	LastScrpeAt             = time.Now()
 	RollbarAccountReadToken = ""
+	MaxItemsPerProject      = 0
 )
 
 func main() {
@@ -32,6 +33,12 @@ func main() {
 	if d, err := time.ParseDuration(envInterval); err == nil && d >= time.Minute {
 		ScrapeInterval = d
 		logrus.Infof("Scrape interval from $SCRAPE_INTERVAL: %s", d)
+	}
+
+	envMaxItems := os.Getenv("MAX_ITEMS")
+	if n, err := strconv.Atoi(envMaxItems); err == nil && n > 0 {
+		MaxItemsPerProject = n
+		logrus.Infof("Max items per project from $MAX_ITEMS: %d", n)
 	}
 
 	rollbar.AccountReadAccessToken = os.Getenv("ROLLBAR_ACCOUNT_READ_TOKEN")

@@ -178,6 +178,8 @@ type OccurrenceMetricsParams struct {
 	Aggregates  []Aggregate  `json:"aggregates,omitempty"`
 	Sort        *Sort        `json:"sort,omitempty"`
 	Granularity *Granularity `json:"granularity,omitempty"`
+	Offset      int          `json:"offset,omitempty"`
+	Limit       int          `json:"limit,omitempty"`
 }
 
 type FieldValue struct {
