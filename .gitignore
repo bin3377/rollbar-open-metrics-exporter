@@ -13,3 +13,8 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# local only files
+go.work*
+*.code-workspace
+rollbar-open-metrics-exporter
