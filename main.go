@@ -23,6 +23,14 @@ var (
 )
 
 func main() {
+
+	logrus.SetLevel(logrus.InfoLevel)
+	envLevel := os.Getenv("LOG_LEVEL")
+	if l, err := logrus.ParseLevel(envLevel); err == nil {
+		logrus.Infof("Log level from $LOG_LEVEL: %s", l)
+		logrus.SetLevel(l)
+	}
+
 	envPort := os.Getenv("PORT")
 	if p, err := strconv.Atoi(envPort); err == nil && p > 1024 {
 		Port = p

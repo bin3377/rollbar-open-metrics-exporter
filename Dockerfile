@@ -15,5 +15,4 @@ FROM scratch
 COPY --from=builder /app/rollbar-open-metrics-exporter .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-EXPOSE 8080
 ENTRYPOINT ["./rollbar-open-metrics-exporter"]

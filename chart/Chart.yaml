@@ -1,0 +1,12 @@
+---
+apiVersion: v2
+description: Rollbar metrics open metrics (Promtheus) exporter
+name: rollbar-open-metrics-exporter
+version: 0.0.1
+appVersion: 0.0.0
+home: https://github.com/bin3377/rollbar-open-metrics-exporter/chart
+sources:
+  - https://github.com/bin3377/rollbar-open-metrics-exporter
+maintainers:
+  - name: bin3377
+    email: bin3377@msn.com

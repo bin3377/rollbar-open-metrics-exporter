@@ -1,0 +1,83 @@
+image:
+  repository: bin3377/rollbar-open-metrics-exporter
+  # Overrides the image tag whose default is v{{ .Chart.AppVersion }}
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+# - name: registrySecretName
+
+nameOverride: ""
+fullnameOverride: ""
+
+exporter:
+  # rollbar account read token, required
+  rollbarAccountReadToken: ""
+  # rollbar account write token, if not empty, will create a project token "read" with read scope if not exist
+  rollbarAccountWriteToken: ""
+  # scrape interval from rollbar endpoint
+  scrapeInterval: 5m
+  # max items collect from project if not empty
+  maxItems: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # The list of secrets mountable by this service account.
+  # See https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets
+  secrets: []
+
+commonLabels: {}
+
+podLabels: {}
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+priorityClassName: ""
+
+replicas: 1
+
+updateStrategy: {}
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: https
+    scheme: HTTPS
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: https
+    scheme: HTTPS
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  failureThreshold: 3
+
+service:
+  type: ClusterIP
+  annotations: {}
+  labels: {}
+  
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+deploymentAnnotations: {}
+
