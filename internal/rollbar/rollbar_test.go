@@ -89,7 +89,7 @@ func Test_ListEnvrionments(t *testing.T) {
 func Test_GetOccurrencesMetrics(t *testing.T) {
 	token := os.Getenv("ROLLBAR_PROJECT_READ_TOKEN")
 	metrics, err := rollbar.GetOccurrencesMetrics(token,
-		rollbar.NewItemOccurrencesInput(time.Hour, 0),
+		rollbar.NewItemOccurrencesInput(time.Hour, 0, 10),
 	)
 	ok(t, err)
 	for _, tp := range metrics.Timepoints {
@@ -97,7 +97,7 @@ func Test_GetOccurrencesMetrics(t *testing.T) {
 		for _, row := range tp.MetricsRows {
 			line := ""
 			for _, cell := range row {
-				line += fmt.Sprintf("%s: %v,", cell.Field, cell.Value)
+				line += fmt.Sprintf("%s:%v, ", cell.Field, cell.Value)
 			}
 			logrus.Println(line)
 		}
@@ -106,7 +106,7 @@ func Test_GetOccurrencesMetrics(t *testing.T) {
 
 func Test_GetItemOccurrences(t *testing.T) {
 	token := os.Getenv("ROLLBAR_PROJECT_READ_TOKEN")
-	occs, err := rollbar.GetItemOccurrences(token, time.Hour, 10)
+	occs, err := rollbar.GetItemOccurrences(token, time.Hour, 0)
 	ok(t, err)
 	for _, occ := range occs {
 		logrus.Printf("%v", occ)
@@ -127,7 +127,7 @@ func Test_GetItemByID(t *testing.T) {
 
 func Test_ListItemsWithIDs(t *testing.T) {
 	token := os.Getenv("ROLLBAR_PROJECT_READ_TOKEN")
-	occs, err := rollbar.GetItemOccurrences(token, time.Hour, 0)
+	occs, err := rollbar.GetItemOccurrences(token, time.Hour, 10)
 	ok(t, err)
 	ids := make([]int, 0)
 	for _, occ := range occs {

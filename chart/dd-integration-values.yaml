@@ -1,0 +1,46 @@
+image:
+  pullPolicy: Always
+
+exporter:
+  maxItems: ""
+  logLevel: debug
+  includeProjectsRegex: CourseHero
+
+service:
+  annotations:
+    ad.datadoghq.com/service.check_names: |
+      ["openmetrics"]
+    ad.datadoghq.com/service.init_configs: |
+      [{}]
+    ad.datadoghq.com/service.instances: |
+      [
+        {
+          "prometheus_url": "http://%%host%%:8080/metrics",
+          "namespace": "rollbar_exporter",
+          "min_collection_interval": 120,
+          "tag_by_endpoint": false,
+          "max_returned_metrics": 10000,
+          "metrics": [
+            "item_occurrences",
+            "item_total_occurrences"
+          ],
+          "label_joins": {
+            "project_status": {
+              "label_to_match": "project_id",
+              "labels_to_get": [ "name" ]
+            },
+            "item_status": {
+              "label_to_match": "item_id",
+              "labels_to_get": [ 
+                "title", 
+                "environment", 
+                "platform",
+                "framework",
+                "hash",
+                "status",
+                "level"
+              ]
+            }
+          }
+        }
+      ]

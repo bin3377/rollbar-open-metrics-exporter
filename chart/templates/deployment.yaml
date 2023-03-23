@@ -50,6 +50,28 @@ spec:
           {{- end }}
           image: {{ include "app.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- with .Values.exporter.scrapeInterval }}
+            - name: SCRAPE_INTERVAL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.exporter.maxItems }}
+            - name: MAX_ITEMS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.exporter.logLevel }}
+            - name: LOG_LEVEL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.exporter.includeProjectsRegex }}
+            - name: INCLUDE_PROJECTS_REGEX
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.exporter.excludeProjectsRegex }}
+            - name: EXCLUDE_PROJECTS_REGEX
+              value: {{ . | quote }}
+            {{- end }}
+
           envFrom:
             - secretRef:
                 name: {{ template "app.fullname" . }}-config

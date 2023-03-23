@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	occurrences = prometheus.NewCounterVec(prometheus.CounterOpts{
+	occurrences = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "item_total_occurrences",
 		Help: "This is the counter of total occurrences of an item",
 	},
@@ -24,7 +24,7 @@ var (
 		Name: "item_status",
 		Help: "This is the status of item, value is always 1",
 	}, []string{
-		"id",
+		"item_id",
 		"title",
 		"project_id",
 		"counter_id",
@@ -40,7 +40,7 @@ var (
 		Name: "project_status",
 		Help: "This is the status of project, value is always 1",
 	}, []string{
-		"id",
+		"project_id",
 		"name",
 		"account_id",
 		"status",
@@ -50,12 +50,8 @@ var (
 		Name: "item_occurrences",
 		Help: "This is the histogram of item occurences",
 	}, []string{
-		"id",
-		"title",
-		"environment",
-		"status",
-		"level",
-		"project",
+		"project_id",
+		"item_id",
 	})
 )
 
@@ -85,7 +81,6 @@ func startScrape() {
 }
 
 var tokens = make(map[int]string)
-var itemCounter = make(map[int]int64)
 
 func scrape() error {
 	ps, err := rollbar.ListProjects()
@@ -95,18 +90,24 @@ func scrape() error {
 	}
 
 	for _, p := range ps {
+		if !IncludeProjectsRegex.MatchString(p.Name) || ExcludeProjectsRegex.MatchString(p.Name) {
+			logrus.Infof("skip project [%d]%s", p.ID, p.Name)
+			continue
+		}
+		if p.Status == rollbar.StatusDisabled {
+			logrus.Infof("skip disabled project [%d]%s", p.ID, p.Name)
+			continue
+		}
+
+		logrus.Infof("process project [%d]%s", p.ID, p.Name)
 
 		// set project_status
 		projectStatus.WithLabelValues(
-			fmt.Sprintf("%d", p.ID),        /* id */
+			fmt.Sprintf("%d", p.ID),        /* project_id */
 			p.Name,                         /* name */
 			fmt.Sprintf("%d", p.AccountID), /* account_id */
 			string(p.Status),               /* status */
 		).Set(1)
-
-		if p.Status == rollbar.StatusDisabled {
-			continue
-		}
 
 		token, ok := tokens[p.ID]
 		if !ok {
@@ -130,12 +131,8 @@ func scrape() error {
 		for _, occ := range occs {
 			ids = append(ids, occ.ItemID)
 			occurenceHistorigram.WithLabelValues(
-				fmt.Sprintf("%d", occ.ItemID), /* id */
-				occ.ItemTitle,                 /* title */
-				occ.Environment,               /* environment */
-				occ.ItemStatus,                /* status */
-				occ.ItemLevel,                 /* level */
-				p.Name,                        /* project */
+				fmt.Sprintf("%d", p.ID),       /* project_id */
+				fmt.Sprintf("%d", occ.ItemID), /* item_id */
 			).Observe(float64(occ.OccurrenceCount))
 		}
 
@@ -149,7 +146,7 @@ func scrape() error {
 		for _, item := range items {
 			// set item_status
 			itemStatus.WithLabelValues(
-				fmt.Sprintf("%d", item.ID),        /* id */
+				fmt.Sprintf("%d", item.ID),        /* item_id */
 				item.Title,                        /* title */
 				fmt.Sprintf("%d", item.ProjectID), /* project_id */
 				fmt.Sprintf("%d", item.CounterID), /* counter_id */
@@ -161,12 +158,10 @@ func scrape() error {
 				item.Level,                        /* level */
 			).Set(1)
 
-			old := itemCounter[item.ID]
 			occurrences.WithLabelValues(
 				fmt.Sprintf("%d", p.ID),    /* project_id */
 				fmt.Sprintf("%d", item.ID), /* item_id */
-			).Add(float64(item.TotalOccurrences - old))
-			itemCounter[item.ID] = item.TotalOccurrences
+			).Set(float64(item.TotalOccurrences))
 		}
 	}
 

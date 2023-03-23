@@ -16,9 +16,15 @@ exporter:
   # rollbar account write token, if not empty, will create a project token "read" with read scope if not exist
   rollbarAccountWriteToken: ""
   # scrape interval from rollbar endpoint
-  scrapeInterval: 5m
+  scrapeInterval: 2m
   # max items collect from project if not empty
   maxItems: ""
+  # log level - debug, info, warn, error
+  logLevel: info
+  # includeProjectsRegex - include only project name match this regex if not empty
+  includeProjectsRegex: ""
+  # excludeProjectsRegex - exclude project name match this regex if not empty
+  excludeProjectsRegex: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -51,8 +57,8 @@ updateStrategy: {}
 livenessProbe:
   httpGet:
     path: /healthz
-    port: https
-    scheme: HTTPS
+    port: 8080
+    scheme: HTTP
   initialDelaySeconds: 0
   periodSeconds: 10
   failureThreshold: 3
@@ -60,8 +66,8 @@ livenessProbe:
 readinessProbe:
   httpGet:
     path: /healthz
-    port: https
-    scheme: HTTPS
+    port: 8080
+    scheme: HTTP
   initialDelaySeconds: 20
   periodSeconds: 10
   failureThreshold: 3

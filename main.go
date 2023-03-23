@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -13,40 +14,57 @@ import (
 )
 
 var (
-	Port                    = 8080
-	MetricsPath             = "/metrics"
-	HealthPath              = "/healthz"
-	ScrapeInterval          = 5 * time.Minute
-	LastScrpeAt             = time.Now()
-	RollbarAccountReadToken = ""
-	MaxItemsPerProject      = 0
+	Port                 = 8080
+	MetricsPath          = "/metrics"
+	HealthPath           = "/healthz"
+	ScrapeInterval       = 5 * time.Minute
+	MaxItemsPerProject   = 0
+	IncludeProjectsRegex = regexp.MustCompile("^.*$")
+	ExcludeProjectsRegex = regexp.MustCompile("^$")
 )
 
 func main() {
 
-	logrus.SetLevel(logrus.InfoLevel)
-	envLevel := os.Getenv("LOG_LEVEL")
-	if l, err := logrus.ParseLevel(envLevel); err == nil {
-		logrus.Infof("Log level from $LOG_LEVEL: %s", l)
-		logrus.SetLevel(l)
+	if e, ok := os.LookupEnv("LOG_LEVEL"); ok {
+		if l, err := logrus.ParseLevel(e); err == nil {
+			logrus.Infof("Log level from $LOG_LEVEL: %s", l)
+			logrus.SetLevel(l)
+		}
 	}
 
-	envPort := os.Getenv("PORT")
-	if p, err := strconv.Atoi(envPort); err == nil && p > 1024 {
-		Port = p
-		logrus.Infof("Port from $PORT: %d", p)
+	if e, ok := os.LookupEnv("INCLUDE_PROJECTS_REGEX"); ok {
+		if r, err := regexp.Compile(e); err == nil {
+			logrus.Infof("$INCLUDE_PROJECTS_REGEX: %s", e)
+			IncludeProjectsRegex = r
+		}
 	}
 
-	envInterval := os.Getenv("SCRAPE_INTERVAL")
-	if d, err := time.ParseDuration(envInterval); err == nil && d >= time.Minute {
-		ScrapeInterval = d
-		logrus.Infof("Scrape interval from $SCRAPE_INTERVAL: %s", d)
+	if e, ok := os.LookupEnv("EXCLUDE_PROJECTS_REGEX"); ok {
+		if r, err := regexp.Compile(e); err == nil {
+			logrus.Infof("$EXCLUDE_PROJECTS_REGEX: %s", e)
+			ExcludeProjectsRegex = r
+		}
 	}
 
-	envMaxItems := os.Getenv("MAX_ITEMS")
-	if n, err := strconv.Atoi(envMaxItems); err == nil && n > 0 {
-		MaxItemsPerProject = n
-		logrus.Infof("Max items per project from $MAX_ITEMS: %d", n)
+	if e, ok := os.LookupEnv("PORT"); ok {
+		if p, err := strconv.Atoi(e); err == nil && p > 1024 {
+			Port = p
+			logrus.Infof("Port from $PORT: %d", p)
+		}
+	}
+
+	if e, ok := os.LookupEnv("SCRAPE_INTERVAL"); ok {
+		if d, err := time.ParseDuration(e); err == nil && d >= time.Minute {
+			ScrapeInterval = d
+			logrus.Infof("Scrape interval from $SCRAPE_INTERVAL: %s", d)
+		}
+	}
+
+	if e, ok := os.LookupEnv("MAX_ITEMS"); ok {
+		if n, err := strconv.Atoi(e); err == nil && n > 0 {
+			MaxItemsPerProject = n
+			logrus.Infof("Max items per project from $MAX_ITEMS: %d", n)
+		}
 	}
 
 	rollbar.AccountReadAccessToken = os.Getenv("ROLLBAR_ACCOUNT_READ_TOKEN")

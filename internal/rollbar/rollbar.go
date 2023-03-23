@@ -225,7 +225,7 @@ func GetOccurrencesMetrics(projectToken string, params OccurrenceMetricsParams) 
 	return &resp.Result, nil
 }
 
-func NewItemOccurrencesInput(ago time.Duration, limit int) OccurrenceMetricsParams {
+func NewItemOccurrencesInput(ago time.Duration, offset, limit int) OccurrenceMetricsParams {
 	end := time.Now()
 	start := end.Add(-ago)
 	return OccurrenceMetricsParams{
@@ -234,32 +234,13 @@ func NewItemOccurrencesInput(ago time.Duration, limit int) OccurrenceMetricsPara
 		GroupBy: []Field{
 			FieldItemId,
 		},
-		Limit: limit,
+		Offset: offset,
+		Limit:  limit,
 	}
 }
 
-func NewItemOccurrencesFullInput(ago time.Duration, limit int) OccurrenceMetricsParams {
-	end := time.Now()
-	start := end.Add(-ago)
-	return OccurrenceMetricsParams{
-		StartTime: start.Unix(),
-		EndTime:   end.Unix(),
-		GroupBy: []Field{
-			FieldItemId,
-			FieldEnvironment,
-			FieldItemTitle,
-			FieldItemStatus,
-			FieldItemLevel,
-		},
-		Limit: limit,
-	}
-}
+func GetItemOccurrences(projectToken string, ago time.Duration, upTo int) ([]ItemOccurrence, error) {
 
-func GetItemOccurrences(projectToken string, ago time.Duration, limit int) ([]ItemOccurrence, error) {
-	metrics, err := GetOccurrencesMetrics(projectToken, NewItemOccurrencesFullInput(ago, limit))
-	if err != nil {
-		return nil, err
-	}
 	conv := func(v any) int64 {
 		i, err := v.(json.Number).Int64()
 		if err != nil {
@@ -267,31 +248,54 @@ func GetItemOccurrences(projectToken string, ago time.Duration, limit int) ([]It
 		}
 		return i
 	}
+
+	limit := 50
+
 	result := make([]ItemOccurrence, 0)
-	for _, tp := range metrics.Timepoints {
-		for _, row := range tp.MetricsRows {
-			logrus.Debugf("%v", row)
-			single := ItemOccurrence{
-				Time: time.Unix(tp.Timestamp, 0),
-			}
-			for _, cell := range row {
-				switch cell.Field {
-				case FieldItemId:
-					single.ItemID = int(conv(cell.Value))
-				case FieldOccurrenceCount:
-					single.OccurrenceCount = conv(cell.Value)
-				case FieldEnvironment:
-					single.Environment = cell.Value.(string)
-				case FieldItemTitle:
-					single.ItemTitle = cell.Value.(string)
-				case FieldItemStatus:
-					single.ItemStatus = cell.Value.(string)
-				case FieldItemLevel:
-					single.ItemLevel = cell.Value.(string)
+
+	for offset := 0; ; offset += limit {
+		logrus.Debugf("query offset:%d, limit:%d", offset, limit)
+		metrics, err := GetOccurrencesMetrics(projectToken, NewItemOccurrencesInput(ago, offset, limit))
+		if err != nil {
+			return nil, err
+		}
+		fetched := 0
+		for _, tp := range metrics.Timepoints {
+			for _, row := range tp.MetricsRows {
+				logrus.Debugf("%v", row)
+				single := ItemOccurrence{
+					Time: time.Unix(tp.Timestamp, 0),
 				}
+				for _, cell := range row {
+					switch cell.Field {
+					case FieldItemId:
+						single.ItemID = int(conv(cell.Value))
+					case FieldOccurrenceCount:
+						single.OccurrenceCount = conv(cell.Value)
+					case FieldEnvironment:
+						single.Environment = cell.Value.(string)
+					case FieldItemTitle:
+						single.ItemTitle = cell.Value.(string)
+					case FieldItemStatus:
+						single.ItemStatus = cell.Value.(string)
+					case FieldItemLevel:
+						single.ItemLevel = cell.Value.(string)
+					}
+				}
+				fetched++
+				if upTo > 0 && len(result) >= upTo {
+					logrus.Debugf("reach the upTo (%d)", upTo)
+					return result, nil
+				}
+				result = append(result, single)
 			}
-			result = append(result, single)
+		}
+		// reach the end
+		if fetched < limit {
+			logrus.Debugf("fetch %d result of limit %d, total %d", fetched, limit, len(result))
+			return result, nil
+		} else {
+			logrus.Debug("continue...")
 		}
 	}
-	return result, nil
 }
